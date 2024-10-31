@@ -1,5 +1,11 @@
 import fitz  # PyMuPDF
+import pytesseract
+from PIL import Image
+import io
 import os
+
+# Set the Tesseract executable path (if not in PATH)
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Adjust as needed
 
 # Path to the PDF file
 pdf_path = 'WallyBook.pdf'  # Replace with your PDF file path
@@ -17,8 +23,17 @@ try:
     for page_number in range(len(pdf_document)):
         page = pdf_document[page_number]
         text = page.get_text()
-        extracted_text.append(text)
-        print(f"Extracted text from page {page_number + 1}")
+        
+        if text.strip():  # Check if text was found
+            extracted_text.append(text)
+            print(f"Extracted text from page {page_number + 1}")
+        else:
+            print(f"No text found on page {page_number + 1}, performing OCR...")
+            pix = page.get_pixmap()  # Render page to an image
+            img = Image.open(io.BytesIO(pix.tobytes()))
+            text = pytesseract.image_to_string(img)
+            extracted_text.append(text)
+            print(f"OCR extracted text from page {page_number + 1}")
 
     # Combine all extracted text into a single string
     all_text = "\n".join(extracted_text)
